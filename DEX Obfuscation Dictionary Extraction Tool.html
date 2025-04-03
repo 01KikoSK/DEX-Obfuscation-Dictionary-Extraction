@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Advanced DEX Obfuscation Dictionary Extraction Tool</title>
+<style>
+body {
+    font-family: sans-serif;
+    margin: 20px;
+}
+textarea {
+    width: 100%;
+    height: 300px;
+    margin-bottom: 10px;
+    padding: 10px;
+    box-sizing: border-box;
+    font-family: monospace;
+    font-size: 14px;
+}
+button {
+    padding: 10px 20px;
+    cursor: pointer;
+}
+#output {
+    margin-top: 20px;
+    border: 1px solid #ccc;
+    padding: 10px;
+    font-family: monospace;
+    white-space: pre-wrap;
+}
+.warning {
+    color: red;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+</style>
+</head>
+<body>
+
+<h1>Advanced DEX Obfuscation Dictionary Extraction Tool (No Simulation)</h1>
+
+<p class="warning">
+    <strong>Warning:</strong> This tool performs static analysis on provided DEX code snippets. It does <strong>not</strong> execute or simulate the code. The accuracy of the extracted dictionary depends heavily on the complexity and techniques used in the obfuscation. This is an advanced tool and requires understanding of DEX bytecode and common obfuscation patterns.
+</p>
+
+<p>
+    Paste snippets of potentially obfuscated DEX bytecode below:
+</p>
+
+<textarea id="dexCode" placeholder="Paste DEX bytecode here..."></textarea>
+
+<button onclick="extractDictionary()">Extract Potential Dictionary</button>
+
+<h2>Extracted Potential Dictionary:</h2>
+<div id="output"></div>
+
+<script>
+function extractDictionary() {
+    const dexCode = document.getElementById("dexCode").value;
+    const outputDiv = document.getElementById("output");
+    outputDiv.innerHTML = "Processing...";
+
+    // Basic regular expressions to identify potential string or data patterns
+    // These are highly simplified and may need significant refinement based on
+    // the specific obfuscation techniques encountered.
+
+    // Look for string literals (basic heuristic)
+    const stringRegex = /const-string(?:[/jumbo])? v\d+, "(.*?)"/g;
+    let match;
+    const potentialStrings = new Set();
+    while ((match = stringRegex.exec(dexCode)) !== null) {
+        potentialStrings.add(match[1]);
+    }
+
+    // Look for potential byte array or data array initializations (very basic heuristic)
+    const byteArrayRegex = /const\/4 v\d+, 0x([0-9a-fA-F]{2})/g; // Single byte
+    const potentialBytes = new Set();
+    let byteMatch;
+    while ((byteMatch = byteArrayRegex.exec(dexCode)) !== null) {
+        potentialBytes.add(byteMatch[1]);
+    }
+
+    // Look for potential method names or field names (very basic heuristic)
+    const methodFieldRegex = /(?:invoke-\w+|iget-\w+|iput-\w+)\s+\{\S*\},\s*L[\w\/]+;->[\w$]+:[\w\(\)]+/g;
+    const potentialNames = new Set();
+    let nameMatch;
+    while ((nameMatch = methodFieldRegex.exec(dexCode)) !== null) {
+        const parts = nameMatch[0].split("->");
+        if (parts.length > 1) {
+            const namePart = parts[1].split(":")[0];
+            potentialNames.add(namePart);
+        }
+    }
+
+    // Combine and display the potential dictionary entries
+    let output = "Potential Strings:\n";
+    if (potentialStrings.size > 0) {
+        potentialStrings.forEach(str => output += `- "${str}"\n`);
+    } else {
+        output += "- No potential strings found (basic scan).\n";
+    }
+
+    output += "\nPotential Byte Values (Hex):\n";
+    if (potentialBytes.size > 0) {
+        potentialBytes.forEach(byte => output += `- 0x${byte}\n`);
+    } else {
+        output += "- No potential byte values found (basic scan).\n";
+    }
+
+    output += "\nPotential Method/Field Names (Basic Heuristic):\n";
+    if (potentialNames.size > 0) {
+        potentialNames.forEach(name => output += `- ${name}\n`);
+    } else {
+        output += "- No potential method/field names found (basic scan).\n";
+    }
+
+    outputDiv.innerHTML = output;
+}
+</script>
+
+</body>
+</html>
